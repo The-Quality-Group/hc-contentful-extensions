@@ -79,7 +79,8 @@
     cfExt.init(function (api) {
         var accordionFieldTitleName = "accordionFieldTitle_";
         var accordionFieldDescriptionName = "accordionFieldDescription_";
-        var currentSetting = api.field.getValue() ?? {};
+        var currentSetting = JSON.parse(api.field.getValue() ?? {});
+        console.log(currentSetting);
         var currentNumberFields = (typeof currentSetting.numberFields !== 'undefined') ? parseInt(currentSetting.numberFields, 10) : 0;
         var container = document.getElementById('container');
         var accordionNumberId = document.getElementById('accordionNumber');
@@ -90,7 +91,7 @@
             for (i = 0; i < currentNumberFields; i++) {
                 dynamicFieldAdd(i, currentSetting['fields'][i]);
             }
-            api.field.setValue(jsonValues)
+            api.field.setValue(JSON.stringify(jsonValues))
         }
 
         accordionNumberId.addEventListener('change', function () {
@@ -110,7 +111,7 @@
                 }
             }
             jsonValues["numberFields"] = number;
-            api.field.setValue(jsonValues)
+            api.field.setValue(JSON.stringify(jsonValues));
         })
 
         function dynamicFieldAdd(i, value = {title: '', description: ''}) {
@@ -140,7 +141,8 @@
 
         function dynamicFieldChange(index, title, description) {
             jsonValues["fields"][index] = {title: title, description: description};
-            api.field.setValue(jsonValues)
+            api.field.setValue(JSON.stringify(jsonValues));
+            console.log(api.field);
         }
 
     })
