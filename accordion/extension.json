@@ -1,4 +1,6 @@
 {
-  "instance": [],
-  "installation": []
+  "id": "accordion",
+  "name": "Accordion",
+  "srcdoc": "./index.html",
+  "fieldTypes": ["Text", "Object"]
 }
