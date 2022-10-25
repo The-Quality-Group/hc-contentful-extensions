@@ -1,0 +1,148 @@
+<!doctype html>
+<head>
+    <style>
+        .input-text {
+            outline: none;
+            box-shadow: rgb(225 228 232 / 20%) 0px 2px 0px inset;
+            box-sizing: border-box;
+            background-color: rgb(255, 255, 255);
+            border: 1px solid rgb(207, 217, 224);
+            border-radius: 6px;
+            color: rgb(65, 77, 99);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            padding: 10px 0.75rem;
+            margin: 0.75rem 0px 1rem;
+            cursor: auto;
+            width: 100%;
+            height: 40px;
+            max-height: 40px;
+        }
+        .input-textarea {
+            outline: none;
+            box-shadow: rgb(225 228 232 / 20%) 0px 2px 0px inset;
+            box-sizing: border-box;
+            background-color: rgb(255, 255, 255);
+            border: 1px solid rgb(207, 217, 224);
+            border-radius: 6px;
+            color: rgb(65, 77, 99);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            padding: 10px 0.75rem;
+            margin: 0.75rem 0px 1rem;
+            cursor: auto;
+            width: 100%;
+        }
+
+        .label {
+            color: #67728a;
+            display: -webkit-box;
+            display: -ms-flexbox;
+            display: flex;
+            font-size: 14px;
+            line-height: 24px;
+            max-width: 800px;
+            width: 100%;
+        }
+        .hint {
+            color: #67728a;
+            font-style: italic;
+            margin: 20px 0 0 5px;
+            width: 100%;
+        }
+    </style>
+    <script type="text/javascript" src="https://unpkg.com/contentful-ui-extensions-sdk@3"></script>
+</head>
+<div>
+    <input id="accordion" type="hidden">
+    <label class="label">Number of Items:</label>
+    <input id="accordionNumber" type="number" max="20" min="0" class="form-control input-text">
+    <br>
+</div>
+<div id="container"></div>
+<div id="template" style="display: none;">
+    <div id="container_{index}" style="max-width: 400px;">
+        <label class="label">Item {index}:</label>
+        <div class="hint">Title</div>
+        <input type="text" index="{index}" id="accordionFieldTitle_{index}" class="input-text">
+        <div class="hint">Description</div>
+        <textarea index="{index}" id="accordionFieldDescription_{index}" rows="4" class="input-textarea"></textarea>
+        <br><br>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.0.2/es6-promise.js"></script>
+<script>
+    var cfExt = window.contentfulExtension || window.contentfulWidget
+
+    cfExt.init(function (api) {
+        var accordionFieldTitleName = "accordionFieldTitle_";
+        var accordionFieldDescriptionName = "accordionFieldDescription_";
+        var currentSetting = api.field.getValue() ?? {};
+        var currentNumberFields = (typeof currentSetting.numberFields !== 'undefined') ? parseInt(currentSetting.numberFields, 10) : 0;
+        var container = document.getElementById('container');
+        var accordionNumberId = document.getElementById('accordionNumber');
+        accordionNumberId.value = currentNumberFields;
+        var jsonValues = {"numberFields": currentNumberFields, "fields": {}};
+
+        if (typeof currentSetting['fields'] !== 'undefined') {
+            for (i = 0; i < currentNumberFields; i++) {
+                dynamicFieldAdd(i, currentSetting['fields'][i]);
+            }
+            api.field.setValue(jsonValues)
+        }
+
+        accordionNumberId.addEventListener('change', function () {
+            var number = this.value;
+            if (number === jsonValues["numberFields"]) {
+                return;
+            }
+
+            if (number > jsonValues["numberFields"]) {
+                for (i = jsonValues["numberFields"]; i < number; i++) {
+                    dynamicFieldAdd(i);
+                }
+            } else {
+                for (i = jsonValues["numberFields"] - 1; i >= number; i--) {
+                    var elem = document.getElementById('container_' + i);
+                    container.removeChild(elem);
+                }
+            }
+            jsonValues["numberFields"] = number;
+            api.field.setValue(jsonValues)
+        })
+
+        function dynamicFieldAdd(i, value = {title: '', description: ''}) {
+            var titleInputId = accordionFieldTitleName + i;
+            var descriptionInputId = accordionFieldDescriptionName + i;
+            var node = document.getElementById('template');
+            var htmlContent = node.innerHTML;
+            container.insertAdjacentHTML('beforeend', htmlContent.replaceAll('{index}', i));
+            var titleInput = document.getElementById(titleInputId);
+            titleInput.value = value['title'];
+            var descriptionInput = document.getElementById(descriptionInputId);
+            descriptionInput.value = value['description'];
+
+            titleInput.addEventListener('change', handleEvent, false);
+            titleInput.addEventListener('keyup', handleEvent, false);
+            descriptionInput.addEventListener('change', handleEvent, false);
+            descriptionInput.addEventListener('keyup', handleEvent, false);
+
+            function handleEvent(event) {
+                var descriptionInputIndex = document.getElementById(accordionFieldDescriptionName + this.getAttribute('index'));
+                var titleInputIndex = document.getElementById(accordionFieldTitleName + this.getAttribute('index'));
+                dynamicFieldChange(this.getAttribute('index'), titleInputIndex.value, descriptionInputIndex.value)
+            }
+
+            jsonValues["fields"][i] = value;
+        }
+
+        function dynamicFieldChange(index, title, description) {
+            jsonValues["fields"][index] = {title: title, description: description};
+            api.field.setValue(jsonValues)
+        }
+
+    })
+
+</script>
